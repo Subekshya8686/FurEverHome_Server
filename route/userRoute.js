@@ -1,19 +1,19 @@
 const express = require("express");
-const router = express.Router();
 const {
-  getData,
-  postData,
-  findById,
-  deleteByID,
-  update,
+  getUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
 } = require("../controller/userController");
-const userValidation = require("../validation/userValidation");
-// const authenticateToken = require("../security/auth");
 
-router.get("/", getData);
-router.post("/", userValidation, postData);
-router.get("/:id", findById);
-router.delete("/:id", deleteByID);
-router.put("/:id", update);
+const router = express.Router();
+
+// CRUD Routes
+router.get("/", getUsers);             // Get all users
+router.get("/:id", getUserById);       // Get a specific user
+router.post("/", createUser);          // Create a new user
+router.put("/:id", updateUser);        // Update an existing user
+router.delete("/:id", deleteUser);     // Delete a user
 
 module.exports = router;
