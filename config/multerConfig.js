@@ -8,27 +8,21 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const fileExtension = path.extname(file.originalname);
-    cb(null, `${Date.now()}${fileExtension}`); // Save with unique timestamp as filename
+    cb(null, `IMG-${Date.now()}${fileExtension}`);
   },
 });
 
-// File filter for validating the file type (only images)
-const fileFilter = (req, file, cb) => {
-  const allowedFileTypes = /jpeg|jpg|png|gif/;
-  const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedFileTypes.test(file.mimetype);
-
-  if (extname && mimetype) {
-    return cb(null, true);
-  } else {
-    cb(new Error("Only image files are allowed (jpeg, jpg, png, gif)."));
+const imageFileFilter = (req, file, cb) => {
+  if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+    return cb(new Error("File format not supported."), false);
   }
+  cb(null, true);
 };
 
 // Configure multer
 const upload = multer({
   storage: storage,
-  fileFilter: fileFilter,
+  fileFilter: imageFileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
 });
 
