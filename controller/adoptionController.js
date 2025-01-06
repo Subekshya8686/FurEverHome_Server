@@ -4,75 +4,81 @@ const AdoptionApplication = require("../models/adoptionApplication");
 const submitAdoptionApplication = async (req, res) => {
   try {
     const {
-      formId,
       applicantId,
       applicantName,
       applicantEmail,
       applicantPhone,
-      applicantAddress,
-      answers,
-      adminHandling,
+      districtOrCity,
+      homeAddress,
+      householdMembers,
+      hasPets,
+      petDetails,
+      residenceType,
+      reasonForAdoption,
+      experienceWithPets,
+      agreementToTerms,
     } = req.body;
 
     // Validate required fields
     if (
-      !formId ||
       !applicantId ||
       !applicantName ||
       !applicantEmail ||
       !applicantPhone ||
-      !applicantAddress ||
-      !answers
+      !districtOrCity ||
+      !homeAddress ||
+      !householdMembers ||
+      hasPets === undefined ||
+      !residenceType ||
+      !reasonForAdoption ||
+      !experienceWithPets ||
+      agreementToTerms === undefined
     ) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({ error: "All required fields must be filled" });
     }
 
-    // Set up adminHandling if not provided, defaults to empty fields
-    const adminHandlingData = adminHandling || {
-      adminId: null, // Admin ID will be assigned later
-      status: "Under Review", // Default status
-      notes: "", // Default notes
-      handledAt: null, // Default handledAt as null
-    };
-
-    // Create the new adoption application
+    // Create a new adoption application
     const newAdoptionApplication = new AdoptionApplication({
-      formId,
       applicantId,
       applicantName,
       applicantEmail,
       applicantPhone,
-      applicantAddress, // Ensure applicantAddress is included in the request body
-      answers, // Ensure answers is an array of questions/answers
-      adminHandling: adminHandlingData, // Include adminHandling field
+      districtOrCity,
+      homeAddress,
+      householdMembers,
+      hasPets,
+      petDetails,
+      residenceType,
+      reasonForAdoption,
+      experienceWithPets,
+      agreementToTerms,
     });
 
-    // Save the application to the database
+    // Save to the database
     await newAdoptionApplication.save();
 
-    // Return a success response
-    res
-      .status(201)
-      .json({
-        message: "Adoption application submitted successfully",
-        data: newAdoptionApplication,
-      });
+    res.status(201).json({
+      message: "Adoption application submitted successfully",
+      data: newAdoptionApplication,
+    });
   } catch (error) {
     console.error("Error submitting adoption application:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to submit adoption application",
-        details: error.message,
-      });
+    res.status(500).json({
+      error: "Failed to submit adoption application",
+      details: error.message,
+    });
   }
 };
 
 // Get all adoption applications
 const getAllAdoptionApplications = async (req, res) => {
   try {
-    const applications = await AdoptionApplication.find();
-    res.status(200).json(applications);
+    const applications = await AdoptionApplication.find({});
+    res.status(200).json({
+      success: true,
+      count: applications.length,
+      data: applications,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -86,8 +92,9 @@ const getAllAdoptionApplications = async (req, res) => {
 const getAdoptionApplicationById = async (req, res) => {
   try {
     const application = await AdoptionApplication.findById(req.params.id);
-    if (!application)
+    if (!application) {
       return res.status(404).json({ error: "Adoption application not found" });
+    }
     res.status(200).json(application);
   } catch (error) {
     console.error(error);
@@ -98,27 +105,55 @@ const getAdoptionApplicationById = async (req, res) => {
   }
 };
 
+// Delete an adoption application
 const deleteAdoptionApplication = async (req, res) => {
-  const { id } = req.params; // ID of the adoption application to delete
-
   try {
-    const adoptionApplication = await AdoptionApplication.findByIdAndDelete(id);
+    const application = await AdoptionApplication.findByIdAndDelete(req.params.id);
+    if (!application) {
+      return res.status(404).json({ error: "Adoption application not found" });
+    }
+    res.status(200).json({ message: "Adoption application deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting adoption application:", error);
+    res.status(500).json({
+      error: "Failed to delete adoption application",
+      details: error.message,
+    });
+  }
+};
 
-    if (!adoptionApplication) {
+// Admin review adoption application
+const reviewAdoptionApplication = async (req, res) => {
+  try {
+    const { adminId, adminStatus, adminNotes } = req.body;
+    const { id } = req.params; // Application ID
+
+    // Validate required fields
+    if (!adminId || !adminStatus) {
+      return res.status(400).json({ error: "Admin ID and status are required" });
+    }
+
+    // Update the application with admin review details
+    const updatedApplication = await AdoptionApplication.findByIdAndUpdate(
+      id,
+      { adminId, adminStatus, adminNotes, handledAt: new Date() },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedApplication) {
       return res.status(404).json({ error: "Adoption application not found" });
     }
 
-    res
-      .status(200)
-      .json({ message: "Adoption application deleted successfully" });
+    res.status(200).json({
+      message: "Application reviewed successfully",
+      data: updatedApplication,
+    });
   } catch (error) {
-    console.error("Error deleting adoption application:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to delete adoption application",
-        details: error.message,
-      });
+    console.error("Error reviewing adoption application:", error);
+    res.status(500).json({
+      error: "Failed to review adoption application",
+      details: error.message,
+    });
   }
 };
 
@@ -127,4 +162,5 @@ module.exports = {
   getAllAdoptionApplications,
   getAdoptionApplicationById,
   deleteAdoptionApplication,
+  reviewAdoptionApplication,
 };
