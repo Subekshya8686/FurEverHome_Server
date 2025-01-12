@@ -1,21 +1,28 @@
 const express = require("express");
 const router = express.Router();
-const petController = require("../controller/petController");
+const {
+  createPet,
+  getPets,
+  getPetById,
+  updatePet,
+  deletePet,
+} = require("../controller/petController");
 const upload = require("../config/multerConfig");
+const { authenticateToken } = require("../security/auth");
 
 // Create a new pet
-router.post("/create", upload.single("photo"), petController.createPet);
+router.post("/create", createPet);
 
 // Get all pets
-router.get("/get", petController.getPets);
+router.get("/getAllPets", getPets);
 
 // Get a specific pet by ID
-router.get("/get/:id", petController.getPetById);
+router.get("/get/:id", getPetById);
 
 // Update a pet by ID
-router.put("/update/:id", upload.single("photo"), petController.updatePet);
+router.put("/update/:id", updatePet);
 
 // Delete a pet by ID
-router.delete("/delete/:id", petController.deletePet);
+router.delete("/delete/:id", deletePet);
 
 module.exports = router;
