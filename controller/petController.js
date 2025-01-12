@@ -3,8 +3,13 @@ const Pet = require("../models/pet");
 // Get all pets
 const getPets = async (req, res) => {
   try {
-    const pets = await Pet.find();
-    res.status(200).json(pets);
+    const pets = await Pet.find({});
+    // res.status(200).json(pets);
+    res.status(200).json({
+      success: true,
+      count: pets.length,
+      data: pets,
+    });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch pets" });
   }
@@ -24,22 +29,85 @@ const getPetById = async (req, res) => {
 };
 
 // Create a new pet
+// const createPet = async (req, res) => {
+//   try {
+//     let petData = req.body;
+
+//     // If a photo is uploaded, store the photo's path
+//     if (req.file) {
+//       petData.photo = `/uploads/${req.file.originalname}`;
+//     }
+
+//     const pet = new Pet(petData);
+//     const savedPet = await pet.save();
+//     res.status(201).json(savedPet);
+//   } catch (error) {
+//     res
+//       .status(500)
+//       .json({ error: "Failed to create pet", details: error.message });
+//   }
+// };
+
 const createPet = async (req, res) => {
   try {
-    let petData = req.body;
+    // Destructure required fields from req.body
+    const {
+      name,
+      description,
+      type,
+      breed,
+      age,
+      weight,
+      vaccinated,
+      specialNeeds,
+      healthDetails,
+      height,
+      eyeColor,
+      furType,
+      color,
+      dateOfBirth,
+      photo,
+    } = req.body;
 
-    // If a photo is uploaded, store the photo's path
-    if (req.file) {
-      petData.photo = `/uploads/${req.file.filename}`;
+    // Basic validation for required fields
+    if (!name || !type || !breed || !age || !weight || !dateOfBirth) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
+    // Prepare the pet data object
+    const petData = {
+      name,
+      description,
+      type,
+      breed,
+      age,
+      weight,
+      vaccinated,
+      specialNeeds,
+      healthDetails,
+      height,
+      eyeColor,
+      furType,
+      color,
+      dateOfBirth,
+      photo,
+    };
+
+    // Create and save the new pet
     const pet = new Pet(petData);
     const savedPet = await pet.save();
-    res.status(201).json(savedPet);
+
+    // Respond with the saved pet data
+    res.status(201).json({
+      message: "Pet created successfully",
+      data: savedPet,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to create pet", details: error.message });
+    // Handle errors
+    res.status(500).json({
+      error: "Failed to create pet",
+      details: error.message,
+    });
   }
 };
 
