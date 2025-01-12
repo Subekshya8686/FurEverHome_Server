@@ -16,17 +16,26 @@ const UserSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: true,
+    required: false,
   },
   address: {
     type: String,
-    required: true,
+    required: false,
+  },
+  dateOfBirth: {
+    type: Date,
+    required: false,
+  },
+  image: {
+    type: String,
+    default: null,
+    required: false,
   },
   role: {
     type: String,
-    enum: ["admin", "applicant"],
+    enum: ["Admin", "User"],
     required: true,
-    default: "applicant",
+    default: "User",
   },
 });
 

@@ -1,9 +1,13 @@
 // /models/pet.model.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 // Defining the pet schema with additional details
 const petSchema = new mongoose.Schema({
   name: {
+    type: String,
+    required: true,
+  },
+  description: {
     type: String,
     required: true,
   },
@@ -33,25 +37,23 @@ const petSchema = new mongoose.Schema({
   },
   healthDetails: {
     type: String, // Extra health details like allergies, medical history, etc.
-    default: '',
+    default: "",
   },
-  physicalCharacteristics: {
-    height: {
-      type: Number, // Height in centimeters
-      default: 0,
-    },
-    furType: {
-      type: String, // Type of fur (e.g., short, long, curly, etc.)
-      default: '',
-    },
-    color: {
-      type: String, // Main color of the pet
-      default: '',
-    },
-    eyeColor: {
-      type: String, // Eye color of the pet
-      default: '',
-    },
+  height: {
+    type: Number, // Height in centimeters
+    default: 0,
+  },
+  furType: {
+    type: String, // Type of fur (e.g., short, long, curly, etc.)
+    default: "",
+  },
+  color: {
+    type: String, // Main color of the pet
+    default: "",
+  },
+  eyeColor: {
+    type: String, // Eye color of the pet
+    default: "",
   },
   dateOfBirth: {
     type: Date, // Date of birth of the pet
@@ -65,6 +67,6 @@ const petSchema = new mongoose.Schema({
 });
 
 // Creating the Pet model
-const Pet = mongoose.model('Pet', petSchema);
+const Pet = mongoose.model("Pet", petSchema);
 
 module.exports = Pet;
