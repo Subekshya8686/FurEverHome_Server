@@ -2,18 +2,26 @@ const express = require("express");
 const connectDB = require("./config/db");
 const userRoute = require("./route/userRoute");
 const petRoute = require("./route/petRoute");
-const formRoute = require("./route/formRoute");
 const adoptionRoute = require("./route/adoptionRoute");
+const authRoute = require("./route/authRoute");
+const fosterRoute = require("./route/fosterRoute");
+const cors = require("cors");
 
 const app = express();
 
 connectDB();
 app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  })
+);
 
-app.use("/api/user", userRoute);
-app.use("/api/pet", petRoute);
-app.use("/api", formRoute);
-app.use("/api", adoptionRoute);
+app.use("/api/v1/user", userRoute);
+app.use("/api/v1/pet", petRoute);
+app.use("/api/v1/adopt", adoptionRoute);
+app.use("/api/v1/auth", authRoute);
+app.use("/api/v1/foster", fosterRoute);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
