@@ -1,17 +1,66 @@
 const Pet = require("../models/pet");
 
-// Get all pets
+// Get all pets with search by name, breed, type, and adoptionStatus, with pagination
 const getPets = async (req, res) => {
   try {
-    const pets = await Pet.find({});
-    // res.status(200).json(pets);
+    const {
+      search = "",
+      breed = "",
+      type = "",
+      adoptionStatus = "", // New filter for adoption status
+      size = 6, // Set default size to 5 per page
+      page = 1,
+    } = req.query;
+
+    // Convert size and page to numbers
+    const pageSize = parseInt(size, 10);
+    const currentPage = parseInt(page, 10);
+
+    // Build search query to match name, breed, type, and adoptionStatus using the provided query parameters
+    const query = {};
+
+    // If search term is provided, search for name, breed, or type (case-insensitive)
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } }, // Case-insensitive search for name
+        { breed: { $regex: search, $options: "i" } }, // Case-insensitive search for breed
+        { type: { $regex: search, $options: "i" } }, // Case-insensitive search for type
+      ];
+    }
+
+    // If breed is provided separately, search specifically by breed
+    if (breed) {
+      query.breed = { $regex: breed, $options: "i" }; // Case-insensitive search for breed
+    }
+
+    // If type is provided separately, search specifically by type
+    if (type) {
+      query.type = { $regex: type, $options: "i" }; // Case-insensitive search for type
+    }
+
+    // If adoptionStatus is provided separately, search specifically by adoptionStatus
+    if (adoptionStatus) {
+      query.adoptionStatus = { $regex: adoptionStatus, $options: "i" }; // Case-insensitive search for adoptionStatus
+    }
+
+    // Get total pet count for pagination
+    const totalPets = await Pet.countDocuments(query);
+    const totalPages = Math.ceil(totalPets / pageSize);
+
+    // Fetch pets with pagination
+    const pets = await Pet.find(query)
+      .limit(pageSize)
+      .skip((currentPage - 1) * pageSize);
+
     res.status(200).json({
       success: true,
-      count: pets.length,
-      data: pets,
+      pets,
+      totalPages,
     });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch pets" });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch pets", details: error.message });
   }
 };
 
@@ -27,26 +76,6 @@ const getPetById = async (req, res) => {
       .json({ error: "Failed to fetch pet", details: error.message });
   }
 };
-
-// Create a new pet
-// const createPet = async (req, res) => {
-//   try {
-//     let petData = req.body;
-
-//     // If a photo is uploaded, store the photo's path
-//     if (req.file) {
-//       petData.photo = `/uploads/${req.file.originalname}`;
-//     }
-
-//     const pet = new Pet(petData);
-//     const savedPet = await pet.save();
-//     res.status(201).json(savedPet);
-//   } catch (error) {
-//     res
-//       .status(500)
-//       .json({ error: "Failed to create pet", details: error.message });
-//   }
-// };
 
 const createPet = async (req, res) => {
   try {
@@ -67,6 +96,7 @@ const createPet = async (req, res) => {
       color,
       dateOfBirth,
       photo,
+      adoptionStatus,
     } = req.body;
 
     // Basic validation for required fields
@@ -91,6 +121,7 @@ const createPet = async (req, res) => {
       color,
       dateOfBirth,
       photo,
+      adoptionStatus,
     };
 
     // Create and save the new pet
@@ -115,11 +146,6 @@ const createPet = async (req, res) => {
 const updatePet = async (req, res) => {
   try {
     let petData = req.body;
-
-    // If a new photo is uploaded, update the photo path
-    if (req.file) {
-      petData.photo = `/uploads/${req.file.filename}`;
-    }
 
     const updatedPet = await Pet.findByIdAndUpdate(req.params.id, petData, {
       new: true,
@@ -148,10 +174,105 @@ const deletePet = async (req, res) => {
   }
 };
 
+// Sort pets from latest to oldest based on dateAdded
+const getPetsSortedByDate = async (req, res) => {
+  try {
+    const { size = 10, page = 1 } = req.query;
+
+    // Convert size and page to numbers
+    const pageSize = parseInt(size, 10);
+    const currentPage = parseInt(page, 10);
+
+    // Sort pets by dateAdded in descending order (latest first)
+    const pets = await Pet.find()
+      .sort({ dateAdded: -1 }) // Sort in descending order by dateAdded
+      .limit(pageSize)
+      .skip((currentPage - 1) * pageSize);
+
+    // Get total pet count for pagination
+    const totalPets = await Pet.countDocuments();
+    const totalPages = Math.ceil(totalPets / pageSize);
+
+    res.status(200).json({
+      success: true,
+      pets,
+      totalPages,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Failed to fetch pets", details: error.message });
+  }
+};
+
+const toggleBookmark = async (req, res) => {
+  try {
+    const { petId } = req.params;
+    const userId = req.user.userId; // Use userId here as per the JWT payload
+    console.log(req.user); // Debugging purpose
+
+    const pet = await Pet.findById(petId);
+    if (!pet) return res.status(404).json({ error: "Pet not found" });
+
+    const isBookmarked = pet.bookmarkedBy.includes(userId);
+
+    // Toggle bookmark action
+    const updatedPet = await Pet.findByIdAndUpdate(
+      petId,
+      {
+        [isBookmarked ? "$pull" : "$addToSet"]: { bookmarkedBy: userId },
+      },
+      { new: true }
+    );
+
+    // Return the response
+    res.status(200).json({
+      success: true,
+      message: isBookmarked ? "Bookmark removed" : "Pet bookmarked",
+      pet: updatedPet,
+    });
+  } catch (error) {
+    console.error(error); // Log for debugging
+    res.status(500).json({
+      error: "Failed to toggle bookmark",
+      details: error.message,
+    });
+  }
+};
+
+// Get pets bookmarked by the user
+const getBookmarkedPets = async (req, res) => {
+  try {
+    const userId = req.user.userId; // Use userId from JWT payload
+    console.log(req.user);
+
+    // Find pets where the userId exists in the bookmarkedBy array
+    const pets = await Pet.find({ bookmarkedBy: userId });
+
+    if (pets.length === 0) {
+      return res.status(404).json({ error: "No bookmarked pets found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      pets,
+    });
+  } catch (error) {
+    console.error(error); // Log for debugging
+    res.status(500).json({
+      error: "Failed to fetch bookmarked pets",
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   getPets,
   getPetById,
   createPet,
   updatePet,
   deletePet,
+  getPetsSortedByDate,
+  toggleBookmark,
+  getBookmarkedPets,
 };
