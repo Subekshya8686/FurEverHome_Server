@@ -5,6 +5,10 @@ const adoptionApplicationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
   },
+  petId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+  },
   applicantName: {
     type: String,
     required: true,

@@ -7,6 +7,10 @@ const FosterApplicationSchema = new mongoose.Schema(
       required: true,
       ref: "User",
     },
+    petId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true, 
+    },
     applicantName: {
       type: String,
       required: true,
