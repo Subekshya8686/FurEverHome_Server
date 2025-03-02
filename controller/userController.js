@@ -191,7 +191,7 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Create a password reset URL
-    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetUrl = `http://localhost:5174/reset-password/${resetToken}`;
 
     // Send email with the reset link
     const transporter = nodemailer.createTransport({
