@@ -170,6 +170,95 @@ const uploadImage = async (req, res, next) => {
   });
 };
 
+// Forgot Password
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Generate a one-time password reset token (valid for 1 hour)
+    const resetToken = jwt.sign(
+      { userId: user._id },
+      SECRET_KEY,
+      { expiresIn: "1h" } // Token expires in 1 hour
+    );
+
+    // Store the reset token in the user's document (optional)
+    user.resetPasswordToken = resetToken;
+    await user.save();
+
+    // Create a password reset URL
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+
+    // Send email with the reset link
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      protocol: "smtp",
+      auth: {
+        user: "subekshyakayastha4@gmail.com",
+        pass: "lshrfgtlqyjjdihl",
+      },
+    });
+
+    const info = await transporter.sendMail({
+      from: "subekshyakayastha4@gmail.com",
+      to: user.email,
+      subject: "Password Reset Request",
+      html: `
+        <h1>Password Reset Request</h1>
+        <p>Click the link below to reset your password:</p>
+        <a href="${resetUrl}">Reset Password</a>
+      `,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset link sent to email",
+      info,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Failed to send reset email", details: error.message });
+  }
+};
+
+// Reset Password
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    // Verify the token
+    const decoded = jwt.verify(token, SECRET_KEY);
+    if (!decoded)
+      return res.status(400).json({ error: "Invalid or expired token" });
+
+    // Find user by the decoded userId from the token
+    const user = await User.findById(decoded.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Hash the new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the user's password
+    user.password = hashedNewPassword;
+    user.resetPasswordToken = undefined; // Remove the reset token after successful reset
+    await user.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "Password reset successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Failed to reset password", details: error.message });
+  }
+};
 
 module.exports = {
   getUsers,
@@ -179,4 +268,6 @@ module.exports = {
   deleteUser,
   login,
   uploadImage,
+  forgotPassword,
+  resetPassword,
 };
