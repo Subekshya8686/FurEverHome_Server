@@ -1,10 +1,40 @@
 const FosterApplication = require("../models/fosterApplication");
 
+const fs = require('fs');
+const json2csv = require('json2csv').parse; // Use json2csv package to convert JSON to CSV
+
+// Download all foster applications as CSV
+const downloadFosterApplications = async (req, res) => {
+  try {
+    // Get all foster applications
+    const applications = await FosterApplication.find({});
+
+    if (applications.length === 0) {
+      return res.status(404).json({ error: "No foster applications found" });
+    }
+
+    // Convert applications to CSV format
+    const csv = json2csv(applications);
+
+    // Set the appropriate headers for file download
+    res.header('Content-Type', 'text/csv');
+    res.attachment('foster_applications.csv');
+    res.send(csv);
+  } catch (error) {
+    console.error("Error downloading foster applications:", error);
+    res.status(500).json({
+      error: "Failed to download foster applications",
+      details: error.message,
+    });
+  }
+};
+
 // Submit a foster application
 const submitFosterApplication = async (req, res) => {
   try {
     const {
       applicantId,
+      petId,
       applicantName,
       applicantEmail,
       applicantPhone,
@@ -23,31 +53,32 @@ const submitFosterApplication = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (
-      !applicantId ||
-      !applicantName ||
-      !applicantEmail ||
-      !applicantPhone ||
-      !districtOrCity ||
-      !homeAddress ||
-      !householdMembers ||
-      hasPets === undefined ||
-      !residenceType ||
-      !reasonForFostering ||
-      !experienceWithPets ||
-      !availabilityDuration ||
-      abilityToHandleMedicalNeeds === undefined ||
-      hasFencedYard === undefined ||
-      agreementToTerms === undefined
-    ) {
-      return res
-        .status(400)
-        .json({ error: "All required fields must be filled" });
-    }
+    // if (
+    //   !applicantId ||
+    //   !applicantName ||
+    //   !applicantEmail ||
+    //   !applicantPhone ||
+    //   !districtOrCity ||
+    //   !homeAddress ||
+    //   !householdMembers ||
+    //   hasPets === undefined ||
+    //   !residenceType ||
+    //   !reasonForFostering ||
+    //   !experienceWithPets ||
+    //   !availabilityDuration ||
+    //   abilityToHandleMedicalNeeds === undefined ||
+    //   hasFencedYard === undefined ||
+    //   agreementToTerms === undefined
+    // ) {
+    //   return res
+    //     .status(400)
+    //     .json({ error: "All required fields must be filled" });
+    // }
 
     // Create a new foster application
     const newFosterApplication = new FosterApplication({
       applicantId,
+      petId,
       applicantName,
       applicantEmail,
       applicantPhone,
@@ -180,4 +211,5 @@ module.exports = {
   getFosterApplicationById,
   deleteFosterApplication,
   reviewFosterApplication,
+  downloadFosterApplications
 };
