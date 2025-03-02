@@ -3,24 +3,24 @@ const connectDB = require("./config/db");
 const userRoute = require("./route/userRoute");
 const petRoute = require("./route/petRoute");
 const adoptionRoute = require("./route/adoptionRoute");
-const authRoute = require("./route/authRoute");
+// const authRoute = require("./route/authRoute");
 const fosterRoute = require("./route/fosterRoute");
 const cors = require("cors");
 
 const app = express();
+app.use("/uploads", express.static("uploads"));
 
 connectDB();
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "*",
   })
 );
 
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/pet", petRoute);
 app.use("/api/v1/adopt", adoptionRoute);
-app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/foster", fosterRoute);
 
 app.get("/", (req, res) => {
@@ -36,3 +36,5 @@ const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+module.exports = app;

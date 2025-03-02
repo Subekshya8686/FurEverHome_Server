@@ -11,6 +11,12 @@ router.get("/getAll", fosterApplicationController.getAllFosterApplications);
 // Route to get a specific foster application by its ID
 router.get("/get/:id", fosterApplicationController.getFosterApplicationById);
 
+// Route for admin to review an adoption application
+router.put("/:id/review", fosterApplicationController.reviewFosterApplication);
+
+// Define the download route
+router.get("/download", fosterApplicationController.downloadFosterApplications);
+
 // Route to delete a foster application
 router.delete(
   "/delete/:id",

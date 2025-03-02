@@ -6,9 +6,12 @@ const {
   getPetById,
   updatePet,
   deletePet,
+  getPetsSortedByDate,
+  toggleBookmark,
+  getBookmarkedPets,
 } = require("../controller/petController");
 const upload = require("../config/multerConfig");
-const { authenticateToken } = require("../security/auth");
+const { authorizeRole, authenticateToken } = require("../security/auth");
 
 // Create a new pet
 router.post("/create", createPet);
@@ -24,5 +27,13 @@ router.put("/update/:id", updatePet);
 
 // Delete a pet by ID
 router.delete("/delete/:id", deletePet);
+
+router.get("/getSortedPets", getPetsSortedByDate);
+
+// Bookmark route
+router.post("/:petId/bookmark", authenticateToken, toggleBookmark);
+
+// Route to get bookmarked pets
+router.get("/bookmarked", authenticateToken, getBookmarkedPets);
 
 module.exports = router;
