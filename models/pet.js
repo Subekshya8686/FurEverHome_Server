@@ -63,6 +63,15 @@ const petSchema = new mongoose.Schema({
     type: Date,
     default: Date.now, // Date when the pet was added to the system
   },
+  adoptionStatus: {
+    type: String,
+    enum: ["adopted", "available", "in foster care"],
+    default: "available",
+  },
+  bookmarkedBy: {
+    type: [mongoose.Schema.Types.ObjectId], // Array of ObjectIds
+    default: [], // Default to an empty array
+  },
   photo: { type: String },
 });
 
